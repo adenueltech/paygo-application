@@ -1,0 +1,378 @@
+PayGo Updated Wireframe
+
+Entry Point — Landing / Home Screen
+Purpose: Introduce the platform and allow Jeffery to explore services quickly.
+Elements:
+Header:
+
+
+“PayGo” logo
+
+
+Login / Sign Up
+
+
+Language toggle
+
+
+
+Hero Banner:
+
+
+“Pay only for what you use — across all your services”
+
+
+CTA Buttons:
+
+
+“Explore Marketplace”
+
+
+“Join as a Professional”
+
+
+Service Previews:
+
+
+Streaming, Consultations, SaaS tools, Data & Utilities
+
+
+Footer: About, Security, Help Center
+
+
+Notes: Highlight PAYG billing as the main value proposition.
+
+ Onboarding Flow
+Purpose: Set up PAYG wallet and user profile.
+Flow:
+Sign-Up Screen:
+
+
+Email / Phone / Password
+
+
+Info: “Your gateway to flexible payments.”
+
+
+Auto-Wallet Creation:
+
+
+Automatically create a self-custody Zcash wallet (RPC via zcashd / QuickNode) and erc 20 wallet saved 
+
+
+Generate shielded address (z_getnewaddress)
+
+
+Store keys securely on device / encrypted storage
+
+
+Role: Vendor / Users
+Interest Selection:
+
+
+Categories: Entertainment, SaaS, Consultation, Data
+
+
+User selects multiple categories → personalizes dashboard
+ User Dashboard
+Purpose: Central hub for PAYG control and insights.
+Elements:
+Wallet Balance (Crypto + optional fiat toggle)
+
+
+Quick Actions:
+
+
+Start New Streaming Consultation Session
+
+
+View Active Services → Resume / Delete
+
+
+Track active subscriptions
+
+
+Top-Up Wallet:
+
+
+Deposit / Withdraw via Crypto / On-Ramp / Off-Ramp / Auto-swapper
+Zec, or o ramp from currency to zec
+Ridge zec to wzec atomic swap to usdt
+
+
+Spending Overview Cards:
+
+
+Today’s Spend, This Month’s Usage, Services Used
+Service used detail
+
+
+Tabs:
+
+
+Subscriptions → Manage recurring services (Unsubscribe)
+
+
+Analytics → Spending charts, usage insights
+
+
+Charts / Insights:
+
+
+Spending by service type
+
+
+“You spent ₦3,200 this month”
+
+
+Suggested budget cap / pause-unused-services suggestions
+ Marketplace (User View)
+Purpose: Discover available services & subscribe using PAYG wallet.
+Flow:
+Search Bar: “SaaS name
+
+
+Filter / Sort: Category, price/minute, rating, availability
+
+
+Service Cards:
+
+
+Thumbnail / Logo
+
+
+Description
+
+
+Rate per session or per-minute usage
+
+
+Upvote / Downvote
+
+
+Subscribe Button:
+
+
+Balance check → insufficient funds → top-up prompt
+
+
+Sufficient funds → generate PIN / session ID
+
+
+Notes: There are no non-active sessions. If a session is missed → wait for next session. Past sessions are not stored (ensures privacy).
+
+Live Session (Streaming / Consultation)
+Flow:
+Search Bar: “live stream 
+
+
+Filter / Sort: Category, price/minute, rating, availability
+
+
+Pre-Session Screen:
+
+
+Professional details (photo, rating, intro)
+
+
+Pricing model (₦/min or $/min)
+
+
+Expected time, total subscribers, estimated cost
+
+
+“Start Consultation” → balance check → proceed
+
+
+Active Session Screen:
+
+
+Video/Audio interface
+
+
+Timer + Live Cost Counter (“₦5.00 / ₦200 balance remaining”)
+
+
+Buttons: End Session, Mute, Chat, Share Screen
+
+
+Upvote / Downvote
+
+
+“Balance Low” alert at 20% threshold
+
+
+Session End Screen:
+
+
+Summary: Duration, Cost, Payment confirmation
+
+
+Rating + Tip option
+
+
+Rebook Later / View Analytic
+Analytics 
+ Payment & Wallet Flow
+Purpose: Hybrid crypto + fiat PAYG model
+Flow:
+Wallet Balance Summary
+
+
+Top-Up Options:
+
+
+Deposit
+Withdraw 
+
+
+Bank Transfer / On-Ramp
+
+
+Off-Ramp / Withdraw
+
+
+Crypto (USDT / USDC / ZEC)
+
+
+PAYG Micro-Billing: Deduct per transaction, per session, or per API call
+
+
+SDK Integration: Wallet can be used externally to pay as you go anywhere
+
+external interference 
+Sdk 
+User and vendors can cross chain fo users to subscribe with token of choice or vendors can cross chain to token of choice to spend
+Vendors can receive payment for token of choice
+ Vendor 
+Purpose: For professionals offering services
+Features:
+Dashboard: Revenue, Active Sessions, Ratings, users count, active users, o active users, users per regio  
+
+
+Create Service: Add image, description, rate, submit
+
+
+Manage Services: Edit / Delete / List of services
+
+
+Analytics: Earnings by service, Total users, Retention
+
+
+Smart contract summary: “You earned ₦500 from a 10-min session”
+
+
+ Notifications & Alerts
+Usage nearing 80% → push/email
+
+
+Balance low → in-session alert
+
+
+Session paused due to zero balance → modal prompt
+
+
+Professional session reminders / upcoming bookings
+
+
+
+ System / Back-End Interactions
+Smart Contracts: Handle PAYG micro-billing per second/minute
+
+
+API Sync: Session data updates user/vendor wallets
+Key Concepts
+PayGo UID
+
+
+Generated when a user subscribes to a PayGo service.
+
+
+Unique per user per vendor (optional: reusable across vendors).
+
+
+Links user wallet → vendor usage → billing.
+
+
+Vendor Integration via SDK
+
+
+Vendor adds PayGo SDK to their website/app.
+
+
+SDK exposes a “Pay with PayGo” button.
+
+
+User enters or selects Pay with PayGo” button
+User enters  UID in vendor site when starting the service.
+
+
+Billing Flow
+
+
+Vendor site sends UID + service ID + usage metrics (rate, duration, API call count, etc.) to PayGo backend.
+
+
+PayGo backend matches UID to wallet, calculates cost, and deducts balance.
+
+
+PayGo sends success/failure response to vendor site → unlocks service if payment succeeds.
+
+
+Key Concepts
+Live Stream Creator (Host)
+
+
+Creates a live stream session on PayGo platform.
+
+
+Defines rate (per minute or per session).
+
+
+Stream is live only/
+
+
+Live Stream Attendee (Viewer)
+
+
+Subscribes to the live stream via PayGo wallet
+
+
+Wallet is charged in real-time per minute/usage.
+
+
+Access is controlled via UID + session ID.
+
+
+Content Ephemeral
+
+
+After this window, the video is deleted to ensure privacy.
+
+
+PAYG Billing
+
+
+Micro-billing is per minute or per action.
+
+
+Deducted from wallet automatically via PayGo backend.
+
+
+PayGo SDK — Overview
+Purpose:
+ Allow vendors to integrate PayGo payments without handling wallet balances or private data. Users pay per usage, and PayGo backend handles micro-billing securely.
+Key Points:
+Works for streaming, SaaS, APIs, or any PAYG service outside paygo
+
+
+Uses user UID to link wallet → service usage
+
+
+Handles real-time billing, confirmations, and alerts
+
+
+Lightweight JS library for web/React/React Native
+
+
+

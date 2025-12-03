@@ -1,0 +1,58 @@
+PayGo MVP Contracts - Deployed to Base Sepolia (Chain ID: 84532)
+================================================================
+
+Deployment Date: 2025-11-19
+Network: Base Sepolia
+Gas Used: 8,592,855
+Cost: 0.000008595132106575 ETH
+Deployer: 0xdE520c34e16F746111Ca49091B40eCa09B7fc1E8
+
+DEPLOYED CONTRACTS:
+===================
+
+1. PaygoEscrowVault
+   Address: 0xA973806Ba9102D42f102467EC9c0c859639139Be
+   Purpose: Main escrow contract for handling payments
+
+2. PaygoMerchantRegistry  
+   Address: 0xc324464a1aC5C103c6060Df094f38Cb20d07c33d
+   Purpose: Merchant registration and KYC management
+
+3. PaygoMarketplace
+   Address: 0xF4a7D296c6bfC7B3B1c9dA3c854E98153F957906
+   Purpose: Service marketplace for listing services
+
+4. PaygoBilling
+   Address: 0xB83B7fACFeAd639850A8E18D85f0AB0324D5b6D8
+   Purpose: Session-based billing system
+
+5. PaygoSubscriptionScheduler
+   Address: 0x1fEd1080A7D8369a5376406fc75Ee4C71f3997a6
+   Purpose: Automated subscription billing
+
+CONTRACT CONNECTIONS:
+====================
+
+✓ PaygoBilling granted BILLER_ROLE in PaygoEscrowVault
+✓ PaygoSubscriptionScheduler granted BOT_ROLE
+✓ All contracts initialized with deployer as ADMIN_ROLE
+
+EXPLORER LINKS:
+===============
+
+Base Sepolia Explorer: https://sepolia.basescan.org/
+Contract Verification: Use Etherscan-compatible verification tools
+
+NEXT STEPS:
+===========
+
+1. Update .env file with these addresses
+2. Verify contracts on explorer (optional)
+3. Test contract interactions
+4. Set up monitoring and governance
+
+TRANSACTION DETAILS:
+===================
+
+Broadcast file: broadcast/Deploy_MVP.s.sol/84532/run-latest.json
+Cache file: cache/Deploy_MVP.s.sol/84532/run-latest.json
