@@ -170,60 +170,49 @@ const port = process.env.PORT || 5000;
 
 const start = async () => {
   try {
-    // Try to connect to PostgreSQL (don't fail if it doesn't work)
-    let sequelize = null;
-    try {
-      sequelize = connectDB(process.env.DATABASE_URL || process.env.DATABASE_URL);
-      await sequelize.sync({ alter: true }); // Sync database models with alter
+    // Connect to PostgreSQL (required for the app to work)
+    const sequelize = connectDB(process.env.DATABASE_URL);
+    await sequelize.sync({ alter: true }); // Sync database models with alter
 
-      // Initialize models BEFORE requiring routes
-      const initModels = require('./models');
-      const models = initModels(sequelize);
+    // Initialize models BEFORE requiring routes
+    const initModels = require('./models');
+    const models = initModels(sequelize);
 
-      console.log('✅ PostgreSQL database connected and synced');
-      console.log('✅ Models initialized');
-    } catch (dbError) {
-      console.log('⚠️  Database connection failed, running without database:', dbError.message);
-      console.log('📝 Some features will not work without database connection');
-    }
+    console.log('✅ PostgreSQL database connected and synced');
+    console.log('✅ Models initialized');
 
     // Set up additional routes (auth is already set up synchronously)
     try {
-      // Only load database-dependent routes if database is available
-      if (sequelize) {
-        const notificationRoutes = require('./routes/notifications');
-        const profileRoutes = require('./routes/profile');
-        const VendorRouter = require('./routes/vendorProfile');
-        const AdminProfileRouter = require('./routes/AdminProfile');
-        const walletRoutes = require('./routes/wallet');
-        const serviceRoutes = require('./routes/service');
-        const streamRoutes = require('./routes/streamRoutes');
-        const dashboardRoutes = require('./routes/dashboardRoutes');
-        const consultationRoutes = require('./routes/consultation');
-        const imageRoutes = require('./routes/images');
+      const notificationRoutes = require('./routes/notifications');
+      const profileRoutes = require('./routes/profile');
+      const VendorRouter = require('./routes/vendorProfile');
+      const AdminProfileRouter = require('./routes/AdminProfile');
+      const walletRoutes = require('./routes/wallet');
+      const serviceRoutes = require('./routes/service');
+      const streamRoutes = require('./routes/streamRoutes');
+      const dashboardRoutes = require('./routes/dashboardRoutes');
+      const consultationRoutes = require('./routes/consultation');
+      const imageRoutes = require('./routes/images');
 
-        // Set up database-dependent routes
-        app.use('/api/v1/profile', authenticateUser, profileRoutes);
-        app.use('/api/v1/images', imageRoutes);
-        app.use('/api/v1/profiles', authenticateUser, profileRoutes);
-        app.use('/api/v1/vendorprofiles', authenticateUser, VendorRouter);
-        app.use('/api/v1/Adminprofiles', authenticateUser, AdminProfileRouter);
-        app.use('/api/v1/wallet', authenticateUser, walletRoutes);
-        app.use('/api/v1/service', authenticateUser, serviceRoutes);
-        app.use('/api/v1/dashboard', dashboardRoutes);
-        app.use('/api/v1/notifications', notificationRoutes);
-        app.use('/api/v1/consultations', consultationRoutes);
-        app.use('/api/v1/streams', streamRoutes);
+      // Set up all routes
+      app.use('/api/v1/profile', authenticateUser, profileRoutes);
+      app.use('/api/v1/images', imageRoutes);
+      app.use('/api/v1/profiles', authenticateUser, profileRoutes);
+      app.use('/api/v1/vendorprofiles', authenticateUser, VendorRouter);
+      app.use('/api/v1/Adminprofiles', authenticateUser, AdminProfileRouter);
+      app.use('/api/v1/wallet', authenticateUser, walletRoutes);
+      app.use('/api/v1/service', authenticateUser, serviceRoutes);
+      app.use('/api/v1/dashboard', dashboardRoutes);
+      app.use('/api/v1/notifications', notificationRoutes);
+      app.use('/api/v1/consultations', consultationRoutes);
+      app.use('/api/v1/streams', streamRoutes);
 
-        console.log('✅ All routes initialized');
-      } else {
-        console.log('⚠️  Database not available - some routes disabled');
-      }
+      console.log('✅ All routes initialized');
     } catch (routeError) {
       console.log('❌ Error setting up routes:', routeError.message);
     }
 
-    // Initialize blockchain service (don't fail if it doesn't work)
+    // Initialize blockchain service
     try {
       const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org';
       const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
@@ -243,11 +232,8 @@ const start = async () => {
       console.log(`🚀 Server is listening on port ${port}...`)
     );
   } catch (error) {
-    console.log('❌ Critical error starting server:', error);
-    // Still try to start server even with errors
-    server.listen(port, () =>
-      console.log(`🚨 Server started with errors on port ${port}...`)
-    );
+    console.log('❌ Error starting server:', error);
+    process.exit(1); // Exit if database connection fails
   }
 };
 
