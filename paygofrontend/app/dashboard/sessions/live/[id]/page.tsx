@@ -71,10 +71,9 @@ export default function LiveSessionPage({ params }: { params: { id: string } }) 
         setAgoraConfig(agoraConfig)
       } catch (error) {
         console.error('Failed to initialize session:', error)
-        // For demo purposes, use the config data directly if backend fails
-        // This ensures we don't use mock data
-        alert('Backend token generation failed. Using demo config. Please ensure AGORA_APP_CERTIFICATE is set in production.')
-        setAgoraConfig(agoraConfigData)
+        // No fallback to mock data - show error instead
+        alert('Failed to connect to live stream. Please ensure backend is properly configured with AGORA_APP_CERTIFICATE.')
+        throw error
       }
     }
 
@@ -238,4 +237,5 @@ export default function LiveSessionPage({ params }: { params: { id: string } }) 
     </div>
   )
 }
+
 
