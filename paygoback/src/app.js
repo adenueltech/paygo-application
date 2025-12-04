@@ -181,21 +181,25 @@ const start = async () => {
 
     // Always set up routes, even if database fails
     try {
-      const notificationRoutes = require('./routes/notifications');
+      // Auth routes should always be available (don't require database for basic registration)
       const authRouter = require('./routes/auth');
-      const profileRoutes = require('./routes/profile');
-      const VendorRouter = require('./routes/vendorProfile');
-      const AdminProfileRouter = require('./routes/AdminProfile');
-      const walletRoutes = require('./routes/wallet');
-      const serviceRoutes = require('./routes/service');
-      const streamRoutes = require('./routes/streamRoutes');
-      const dashboardRoutes = require('./routes/dashboardRoutes');
-      const consultationRoutes = require('./routes/consultation');
-      const imageRoutes = require('./routes/images');
-
-      // Set up routes
       app.use('/api/v1/auth', authRouter);
+      console.log('✅ Auth routes initialized');
+
+      // Only load database-dependent routes if database is available
       if (sequelize) {
+        const notificationRoutes = require('./routes/notifications');
+        const profileRoutes = require('./routes/profile');
+        const VendorRouter = require('./routes/vendorProfile');
+        const AdminProfileRouter = require('./routes/AdminProfile');
+        const walletRoutes = require('./routes/wallet');
+        const serviceRoutes = require('./routes/service');
+        const streamRoutes = require('./routes/streamRoutes');
+        const dashboardRoutes = require('./routes/dashboardRoutes');
+        const consultationRoutes = require('./routes/consultation');
+        const imageRoutes = require('./routes/images');
+
+        // Set up database-dependent routes
         app.use('/api/v1/profile', authenticateUser, profileRoutes);
         app.use('/api/v1/images', imageRoutes);
         app.use('/api/v1/profiles', authenticateUser, profileRoutes);
@@ -206,10 +210,12 @@ const start = async () => {
         app.use('/api/v1/dashboard', dashboardRoutes);
         app.use('/api/v1/notifications', notificationRoutes);
         app.use('/api/v1/consultations', consultationRoutes);
-      }
-      app.use('/api/v1/streams', streamRoutes);
+        app.use('/api/v1/streams', streamRoutes);
 
-      console.log('✅ Routes initialized');
+        console.log('✅ All routes initialized');
+      } else {
+        console.log('⚠️  Database not available - some routes disabled');
+      }
     } catch (routeError) {
       console.log('❌ Error setting up routes:', routeError.message);
     }
