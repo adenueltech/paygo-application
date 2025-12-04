@@ -49,13 +49,30 @@ export default function LiveSessionPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        // TODO: Call backend to get Agora token
-        // const response = await fetch(`/api/sessions/${params.id}/agora-token`)
-        // const { token } = await response.json()
+        // Call backend to get Agora token
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No auth token found')
+          return
+        }
 
-        setAgoraConfig(agoraConfigData)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/streams/${params.id}/agora-token`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to get Agora token: ${response.status}`)
+        }
+
+        const { agoraConfig } = await response.json()
+        setAgoraConfig(agoraConfig)
       } catch (error) {
         console.error('Failed to initialize session:', error)
+        // Fallback to basic config for demo (remove in production)
+        setAgoraConfig(agoraConfigData)
       }
     }
 

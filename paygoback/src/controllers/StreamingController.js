@@ -3,13 +3,62 @@ const Service = require('../models/Service');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AgoraTokenService = require('../utils/agoraToken');
+const { StatusCodes } = require('http-status-codes');
 
 // Generate UUID using crypto.randomUUID for RFC 4122 compliance
 const generateUUID = () => {
   return crypto.randomUUID();
 };
 
-// 🎬 Start a new streaming session (Only for normal users)
+// 🎟️ Generate Agora token for streaming session
+exports.generateAgoraToken = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    // Input validation
+    if (!sessionId) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Session ID is required' });
+    }
+
+    // Verify session exists and user has access
+    const session = await StreamingSession.findOne({ sessionId });
+
+    if (!session) {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: 'Session not found' });
+    }
+
+    // Check if user is part of this session (either user or vendor)
+    const isUser = session.userId.toString() === req.user.userId;
+    const isVendor = session.vendorId.toString() === req.user.userId;
+
+    if (!isUser && !isVendor) {
+      return res.status(StatusCodes.FORBIDDEN).json({ message: 'Access denied. You are not part of this session.' });
+    }
+
+    // Generate Agora token
+    const channelName = AgoraTokenService.generateChannelName(sessionId);
+    const uid = AgoraTokenService.generateUid();
+    const token = AgoraTokenService.generateRtcToken(channelName, uid);
+
+    return res.status(StatusCodes.OK).json({
+      message: 'Agora token generated successfully',
+      agoraConfig: {
+        appId: '16508d8f8518406287ee4e7f839fb0c3',
+        channel: channelName,
+        token: token,
+        uid: uid
+      }
+    });
+
+  } catch (error) {
+    logger.error('Generate Agora token error:', { error: error.message, sessionId });
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: 'Failed to generate Agora token'
+    });
+  }
+};
+
+//  Start a new streaming session (Only for normal users)
 exports.startSession = async (req, res) => {
   try {
     // ✅ 1. Check if user is a normal user (not vendor)
