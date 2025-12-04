@@ -59,7 +59,7 @@ export function Hero() {
         >
           {/* Glow effect */}
          
-
+    {/* neewwdo */}
           <Image
             src="./paygoimg.png"
             alt="Future of Payments"
