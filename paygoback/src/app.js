@@ -175,10 +175,16 @@ const start = async () => {
     // Connect to PostgreSQL (required for the app to work)
     console.log('🔄 DATABASE: Attempting connection to PostgreSQL')
     const sequelize = connectDB(process.env.DATABASE_URL);
-    console.log('🔄 DATABASE: Connection object created, attempting sync')
+    console.log('🔄 DATABASE: Connection object created, initializing models')
 
+    // Initialize models BEFORE sync
+    console.log('🔄 MODELS: Initializing Sequelize models')
+    const initModels = require('./models');
+    const models = initModels(sequelize);
+    console.log('✅ MODELS: All models initialized successfully')
+
+    console.log('🔄 DATABASE: Starting sync with force recreation')
     try {
-      console.log('🔄 DATABASE: Starting sync with force recreation')
       await sequelize.sync({ force: true }); // Force recreate all tables
       console.log('✅ DATABASE: PostgreSQL connected and tables created successfully')
     } catch (syncError) {
@@ -219,12 +225,6 @@ const start = async () => {
         throw syncError; // Re-throw original error
       }
     }
-
-    // Initialize models BEFORE requiring routes
-    console.log('🔄 MODELS: Initializing Sequelize models')
-    const initModels = require('./models');
-    const models = initModels(sequelize);
-    console.log('✅ MODELS: All models initialized successfully')
 
     // Set up additional routes (auth is already set up synchronously)
     try {
