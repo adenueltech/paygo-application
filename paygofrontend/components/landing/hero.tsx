@@ -58,10 +58,10 @@ export function Hero() {
           className="relative h-full min-h-[400px] w-full flex items-center justify-center"
         >
           {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full" />
+         
 
           <Image
-            src="/paygoimg.png"
+            src="./paygoimg.png"
             alt="Future of Payments"
             width={400}
             height={400}

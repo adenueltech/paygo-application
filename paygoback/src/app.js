@@ -140,6 +140,16 @@ app.use(fileUpload({
 // Serve static files from public directory
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+// Health check endpoint (works even without database)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'PayGo Backend is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 //app.use('/api/billing', billingRoutes);
 
 app.use(express.json());
@@ -152,61 +162,83 @@ const port = process.env.PORT || 5000;
 
 const start = async () => {
   try {
-    // Connect to PostgreSQL
-    const sequelize = connectDB(process.env.DATABASE_URL);
-    await sequelize.sync(); // Sync database models
+    // Try to connect to PostgreSQL (don't fail if it doesn't work)
+    let sequelize = null;
+    try {
+      sequelize = connectDB(process.env.DATABASE_URL || process.env.DATABASE_URL);
+      await sequelize.sync({ alter: true }); // Sync database models with alter
 
-    // Initialize models BEFORE requiring routes
-    const initModels = require('./models');
-    const models = initModels(sequelize);
+      // Initialize models BEFORE requiring routes
+      const initModels = require('./models');
+      const models = initModels(sequelize);
 
-    console.log('✅ PostgreSQL database connected and synced');
-    console.log('✅ Models initialized');
+      console.log('✅ PostgreSQL database connected and synced');
+      console.log('✅ Models initialized');
+    } catch (dbError) {
+      console.log('⚠️  Database connection failed, running without database:', dbError.message);
+      console.log('📝 Some features will not work without database connection');
+    }
 
-    // Now require routes after models are initialized
-    const notificationRoutes = require('./routes/notifications');
-    const authRouter = require('./routes/auth');
-    const profileRoutes = require('./routes/profile');
-    const VendorRouter = require('./routes/vendorProfile');
-    const AdminProfileRouter = require('./routes/AdminProfile');
-    const walletRoutes = require('./routes/wallet');
-    const serviceRoutes = require('./routes/service');
-    const streamRoutes = require('./routes/streamRoutes');
-    const dashboardRoutes = require('./routes/dashboardRoutes');
-    const consultationRoutes = require('./routes/consultation');
-    const imageRoutes = require('./routes/images');
+    // Always set up routes, even if database fails
+    try {
+      const notificationRoutes = require('./routes/notifications');
+      const authRouter = require('./routes/auth');
+      const profileRoutes = require('./routes/profile');
+      const VendorRouter = require('./routes/vendorProfile');
+      const AdminProfileRouter = require('./routes/AdminProfile');
+      const walletRoutes = require('./routes/wallet');
+      const serviceRoutes = require('./routes/service');
+      const streamRoutes = require('./routes/streamRoutes');
+      const dashboardRoutes = require('./routes/dashboardRoutes');
+      const consultationRoutes = require('./routes/consultation');
+      const imageRoutes = require('./routes/images');
 
-    // Set up routes
-    app.use('/api/v1/auth', authRouter);
-    app.use('/api/v1/profile', authenticateUser, profileRoutes);
-    app.use('/api/v1/images', imageRoutes);
-    app.use('/api/v1/profiles', authenticateUser, profileRoutes);
-    app.use('/api/v1/vendorprofiles', authenticateUser, VendorRouter);
-    app.use('/api/v1/Adminprofiles', authenticateUser, AdminProfileRouter);
-    app.use('/api/v1/wallet', authenticateUser, walletRoutes);
-    app.use('/api/v1/service', authenticateUser, serviceRoutes);
-    app.use('/api/v1/streams', streamRoutes);
-    app.use('/api/v1/dashboard', dashboardRoutes);
-    app.use('/api/v1/notifications', notificationRoutes);
-    app.use('/api/v1/consultations', consultationRoutes);
+      // Set up routes
+      app.use('/api/v1/auth', authRouter);
+      if (sequelize) {
+        app.use('/api/v1/profile', authenticateUser, profileRoutes);
+        app.use('/api/v1/images', imageRoutes);
+        app.use('/api/v1/profiles', authenticateUser, profileRoutes);
+        app.use('/api/v1/vendorprofiles', authenticateUser, VendorRouter);
+        app.use('/api/v1/Adminprofiles', authenticateUser, AdminProfileRouter);
+        app.use('/api/v1/wallet', authenticateUser, walletRoutes);
+        app.use('/api/v1/service', authenticateUser, serviceRoutes);
+        app.use('/api/v1/dashboard', dashboardRoutes);
+        app.use('/api/v1/notifications', notificationRoutes);
+        app.use('/api/v1/consultations', consultationRoutes);
+      }
+      app.use('/api/v1/streams', streamRoutes);
 
-    // Initialize blockchain service
-    const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org';
-    const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
+      console.log('✅ Routes initialized');
+    } catch (routeError) {
+      console.log('❌ Error setting up routes:', routeError.message);
+    }
 
-    if (privateKey && privateKey !== 'your_private_key_here') {
-      await blockchainService.initialize(rpcUrl, privateKey);
-      console.log('✅ Blockchain service initialized');
-    } else {
-      console.log('⚠️  Blockchain private key not provided - running in read-only mode');
-      await blockchainService.initialize(rpcUrl);
+    // Initialize blockchain service (don't fail if it doesn't work)
+    try {
+      const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org';
+      const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
+
+      if (privateKey && privateKey !== 'your_private_key_here') {
+        await blockchainService.initialize(rpcUrl, privateKey);
+        console.log('✅ Blockchain service initialized');
+      } else {
+        console.log('⚠️  Blockchain private key not provided - running in read-only mode');
+        await blockchainService.initialize(rpcUrl);
+      }
+    } catch (blockchainError) {
+      console.log('⚠️  Blockchain service initialization failed:', blockchainError.message);
     }
 
     server.listen(port, () =>
-      console.log(`Server is listening on port ${port}...`)
+      console.log(`🚀 Server is listening on port ${port}...`)
     );
   } catch (error) {
-    console.log('❌ Error starting server:', error);
+    console.log('❌ Critical error starting server:', error);
+    // Still try to start server even with errors
+    server.listen(port, () =>
+      console.log(`🚨 Server started with errors on port ${port}...`)
+    );
   }
 };
 

@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: paygo-backend
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          type: postgresql
+          name: paygo-db
+          property: connectionString
+      - key: BASE_SEPOLIA_RPC_URL
+        value: https://sepolia.base.org
+      - key: BLOCKCHAIN_PRIVATE_KEY
+        value: 32ed953c0c7fd8407d9e2a3ec1f4c2028882642aca4950060c92f00d0cf11c23
+      - key: WALLET_ENCRYPTION_KEY
+        value: paygo-secure-wallet-encryption-key-2024
+      - key: ESCROW_VAULT_ADDRESS
+        value: 0xA973806Ba9102D42f102467EC9c0c859639139Be
+      - key: BILLING_ADDRESS
+        value: 0xB83B7fACFeAd639850A8E18D85f0AB0324D5b6D8
+      - key: MARKETPLACE_ADDRESS
+        value: 0xF4a7D296c6bfC7B3B1c9dA3c854E98153F957906
+      - key: MERCHANT_REGISTRY_ADDRESS
+        value: 0xc324464a1aC5C103c6060Df094f38Cb20d07c33d
+      - key: SUBSCRIPTION_SCHEDULER_ADDRESS
+        value: 0x1fEd1080A7D8369a5376406fc75Ee4C71f3997a6
+
+databases:
+  - type: postgresql
+    name: paygo-db
+    databaseName: paygo
+    user: paygo_user
