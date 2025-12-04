@@ -177,8 +177,48 @@ const start = async () => {
     const sequelize = connectDB(process.env.DATABASE_URL);
     console.log('🔄 DATABASE: Connection object created, attempting sync')
 
-    await sequelize.sync({ alter: true }); // Sync database models with alter
-    console.log('✅ DATABASE: PostgreSQL connected and synced successfully')
+    try {
+      console.log('🔄 DATABASE: Starting sync with force recreation')
+      await sequelize.sync({ force: true }); // Force recreate all tables
+      console.log('✅ DATABASE: PostgreSQL connected and tables created successfully')
+    } catch (syncError) {
+      console.log('❌ DATABASE SYNC ERROR:', {
+        message: syncError.message,
+        name: syncError.name,
+        original: syncError.original?.message
+      })
+
+      // Try alternative approach - check database connection
+      try {
+        console.log('🔄 DATABASE: Testing basic connection')
+        await sequelize.authenticate()
+        console.log('✅ DATABASE: Basic connection successful')
+
+        // Try to create tables with raw SQL
+        console.log('🔄 DATABASE: Creating tables with raw SQL')
+        await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "users" (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'vendor', 'admin')),
+            "walletAddress" VARCHAR(42) UNIQUE,
+            "walletEncryptedPrivateKey" TEXT,
+            "zcashAddress" VARCHAR(95) UNIQUE,
+            "zcashEncryptedPrivateKey" TEXT,
+            "isVerified" BOOLEAN DEFAULT FALSE,
+            "isActive" BOOLEAN DEFAULT TRUE,
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+        console.log('✅ DATABASE: Users table created with raw SQL')
+      } catch (fallbackError) {
+        console.log('❌ DATABASE FALLBACK ERROR:', fallbackError.message)
+        throw syncError; // Re-throw original error
+      }
+    }
 
     // Initialize models BEFORE requiring routes
     console.log('🔄 MODELS: Initializing Sequelize models')
