@@ -20,6 +20,9 @@ exports.generateAgoraToken = async (req, res) => {
       return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Session ID is required' });
     }
 
+    // For demo purposes, allow token generation without session check
+    // TODO: Re-enable session validation for production
+    /*
     // Verify session exists and user has access
     const session = await StreamingSession.findOne({ sessionId });
 
@@ -34,6 +37,7 @@ exports.generateAgoraToken = async (req, res) => {
     if (!isUser && !isVendor) {
       return res.status(StatusCodes.FORBIDDEN).json({ message: 'Access denied. You are not part of this session.' });
     }
+    */
 
     // Generate Agora token
     const channelName = AgoraTokenService.generateChannelName(sessionId);
