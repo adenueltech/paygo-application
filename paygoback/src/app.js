@@ -150,6 +150,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Set up basic routes synchronously before middleware
+try {
+  const authRouter = require('./routes/auth');
+  app.use('/api/v1/auth', authRouter);
+  console.log('✅ Auth routes initialized synchronously');
+} catch (error) {
+  console.log('❌ Error setting up auth routes:', error.message);
+}
+
 //app.use('/api/billing', billingRoutes);
 
 app.use(express.json());
@@ -179,13 +188,8 @@ const start = async () => {
       console.log('📝 Some features will not work without database connection');
     }
 
-    // Always set up routes, even if database fails
+    // Set up additional routes (auth is already set up synchronously)
     try {
-      // Auth routes should always be available (don't require database for basic registration)
-      const authRouter = require('./routes/auth');
-      app.use('/api/v1/auth', authRouter);
-      console.log('✅ Auth routes initialized');
-
       // Only load database-dependent routes if database is available
       if (sequelize) {
         const notificationRoutes = require('./routes/notifications');
