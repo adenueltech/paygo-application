@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, RefreshCw, Copy, X, Wallet, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -18,9 +18,64 @@ export function WalletCard() {
   const [isReceiveOpen, setIsReceiveOpen] = useState(false)
   const [isAutoSwapOpen, setIsAutoSwapOpen] = useState(false)
   const [transferType, setTransferType] = useState<"send" | "withdraw">("send")
+  const [backendBalance, setBackendBalance] = useState<string>("0")
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const { wallet, connectWallet, formatAddress } = useBlockchain()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
+
+  // Check if user has backend wallets (created during signup)
+  const hasBackendWallets = user?.walletAddress && user?.zcashAddress
+
+  // Fetch balance from backend API
+  const fetchBackendBalance = async () => {
+    if (!hasBackendWallets) return
+
+    setIsLoadingBalance(true)
+    try {
+      if (!token) return
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/wallet/balance`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBackendBalance(data.balance?.toString() || "0")
+      }
+    } catch (error) {
+      console.error('Failed to fetch backend balance:', error)
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
+
+  // Fetch balance on component mount if user has backend wallets
+  useEffect(() => {
+    if (hasBackendWallets) {
+      fetchBackendBalance()
+    }
+  }, [hasBackendWallets])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      if (hasBackendWallets) {
+        await fetchBackendBalance()
+      } else if (wallet.isConnected && wallet.address) {
+        // Refresh blockchain balance
+        // This would need to be implemented in the useBlockchain hook
+      }
+    } catch (error) {
+      console.error('Failed to refresh balance:', error)
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000)
+    }
+  }
 
   const handleTransfer = (type: "send" | "withdraw") => {
     setTransferType(type)
@@ -71,28 +126,34 @@ export function WalletCard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-400">Total Balance</p>
-            {wallet.isConnected && wallet.address && (
+            {(hasBackendWallets || wallet.isConnected) && (
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                {formatAddress(wallet.address)}
+                {hasBackendWallets ? (
+                  user.walletAddress && formatAddress(user.walletAddress)
+                ) : (
+                  wallet.address && formatAddress(wallet.address)
+                )}
               </div>
             )}
           </div>
           <div className="flex items-baseline gap-2">
             <h2 className="text-4xl font-bold tracking-tight">
-              {wallet.isConnected ? (
+              {hasBackendWallets ? (
+                showBalance ? `${backendBalance} ETH` : "••••••••"
+              ) : wallet.isConnected ? (
                 showBalance ? `${wallet.balance} ETH` : "••••••••"
               ) : (
                 showBalance ? "Connect Wallet" : "••••••••"
               )}
             </h2>
-            {showBalance && wallet.isConnected && (
+            {showBalance && (hasBackendWallets || wallet.isConnected) && (
               <span className="text-sm font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">
-                On-chain
+                {hasBackendWallets ? "Backend" : "On-chain"}
               </span>
             )}
           </div>
-          {wallet.error && (
+          {(wallet.error && !hasBackendWallets) && (
             <div className="flex items-center gap-2 mt-2 text-sm text-red-400">
               <AlertCircle className="h-4 w-4" />
               {wallet.error}
@@ -101,7 +162,7 @@ export function WalletCard() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
-          {!wallet.isConnected ? (
+          {!hasBackendWallets && !wallet.isConnected ? (
             <Button
               onClick={handleConnectWallet}
               disabled={wallet.isConnecting}
