@@ -170,16 +170,21 @@ const port = process.env.PORT || 5000;
 
 const start = async () => {
   try {
+    console.log('🚀 STARTING SERVER: Initializing PayGo backend')
+
     // Connect to PostgreSQL (required for the app to work)
+    console.log('🔄 DATABASE: Attempting connection to PostgreSQL')
     const sequelize = connectDB(process.env.DATABASE_URL);
+    console.log('🔄 DATABASE: Connection object created, attempting sync')
+
     await sequelize.sync({ alter: true }); // Sync database models with alter
+    console.log('✅ DATABASE: PostgreSQL connected and synced successfully')
 
     // Initialize models BEFORE requiring routes
+    console.log('🔄 MODELS: Initializing Sequelize models')
     const initModels = require('./models');
     const models = initModels(sequelize);
-
-    console.log('✅ PostgreSQL database connected and synced');
-    console.log('✅ Models initialized');
+    console.log('✅ MODELS: All models initialized successfully')
 
     // Set up additional routes (auth is already set up synchronously)
     try {
