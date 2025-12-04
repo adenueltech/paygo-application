@@ -61,7 +61,7 @@ export function Hero() {
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 blur-[100px] rounded-full" />
 
           <Image
-            src="/heroimg.png"
+            src="/paygoimg.png"
             alt="Future of Payments"
             width={400}
             height={400}

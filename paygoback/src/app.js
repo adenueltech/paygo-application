@@ -28,7 +28,11 @@ const server = http.createServer(app);
 // ✅ Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: [
+      'http://localhost:3000', // Development
+      'https://paygo-application.vercel.app', // Production frontend
+      '*' // Allow all for now, but should be restricted in production
+    ],
     methods: ['GET', 'POST']
   }
 });
@@ -109,7 +113,14 @@ app.use(
 );*/
 app.use(express.json());
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000', // Development
+    'https://paygo-application.vercel.app', // Production frontend
+    '*' // Allow all for now, but should be restricted in production
+  ],
+  credentials: true
+}));
 app.use(xss());
 
 //app.get('/', (req, res) => {
