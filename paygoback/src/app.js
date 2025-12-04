@@ -161,7 +161,6 @@ try {
 
 //app.use('/api/billing', billingRoutes);
 
-app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
