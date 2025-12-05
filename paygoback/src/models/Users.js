@@ -72,6 +72,22 @@ class User extends Model {
         type: DataTypes.TEXT,
         allowNull: true
       },
+      viewingKey: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      zcashAccountIndex: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+      },
+      isSynced: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      lastSyncHeight: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+      },
       isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false

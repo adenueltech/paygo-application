@@ -1,0 +1,18 @@
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T15:37:33.938Z","userId":1}
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T16:40:32.263Z","userId":1}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T16:46:35.460Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T16:53:26.471Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T16:53:26.482Z"}
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T16:54:29.140Z","userId":3}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T16:54:43.592Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T16:54:43.600Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T17:01:56.052Z"}
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T17:29:53.533Z","userId":1}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T17:31:47.043Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T17:31:47.069Z"}
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T17:43:14.628Z","userId":1}
+{"error":"Failed to create wallets: crypto.createCipherGCM is not a function","level":"warn","message":"Wallet creation failed:","service":"paygo-backend","timestamp":"2025-12-04T17:45:24.650Z","userId":3}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T17:46:12.947Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-04T17:46:13.057Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-05T00:34:59.312Z"}
+{"error":"StreamingSession.find is not a function","level":"error","message":"Get active sessions error:","service":"paygo-backend","timestamp":"2025-12-05T00:34:59.423Z"}

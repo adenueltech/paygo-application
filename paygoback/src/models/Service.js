@@ -54,7 +54,8 @@ class Service extends Model {
           'API Calls & Compute', 'Storage Services', 'Processing Services',
           'Digital Downloads', 'SaaS Features',
           'Transaction-Based', 'Professional Services',
-          'Data Services', 'Creative Services', 'Technical Services'
+          'Data Services', 'Creative Services', 'Technical Services',
+          'Live Streaming'
         ),
         allowNull: false,
         validate: {

@@ -14,7 +14,10 @@ const {
   transferFunds,
   getTransactions,
   getAddress,
-  autoSwap
+  autoSwap,
+  getZcashBalance,
+  getZcashTransactions,
+  getZcashWallet
 } = require('../controllers/wallet');
 
 const authenticateUser = require('../middleware/authentication');
@@ -54,5 +57,10 @@ router.get('/address', authenticateUser, getAddress);
 
 // Auto swap
 router.post('/swap', authenticateUser, autoSwap);
+
+// Zcash wallet routes
+router.get('/zcash/balance', authenticateUser, getZcashBalance);
+router.get('/zcash/transactions', authenticateUser, getZcashTransactions);
+router.get('/zcash/wallet', authenticateUser, getZcashWallet);
 
 module.exports = router;

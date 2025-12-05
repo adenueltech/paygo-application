@@ -10,8 +10,8 @@ const generateUUID = () => {
   return crypto.randomUUID();
 };
 
-// 🎟️ Generate Agora token for streaming session
-exports.generateAgoraToken = async (req, res) => {
+// 🎟️ Generate VideoSDK token for streaming session
+exports.generateVideoSDKToken = async (req, res) => {
   try {
     const { sessionId } = req.params;
 
@@ -22,47 +22,67 @@ exports.generateAgoraToken = async (req, res) => {
 
     // For demo purposes, allow token generation without session check
     // TODO: Re-enable session validation for production
-    /*
-    // Verify session exists and user has access
-    const session = await StreamingSession.findOne({ sessionId });
 
-    if (!session) {
-      return res.status(StatusCodes.NOT_FOUND).json({ message: 'Session not found' });
+    // Generate VideoSDK JWT token
+    const VIDEOSDK_API_KEY = process.env.VIDEOSDK_TOKEN;
+    const VIDEOSDK_SECRET_KEY = process.env.VIDEOSDK_SECRET;
+
+    if (!VIDEOSDK_API_KEY || !VIDEOSDK_SECRET_KEY) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: 'VideoSDK configuration missing'
+      });
     }
 
-    // Check if user is part of this session (either user or vendor)
-    const isUser = session.userId.toString() === req.user.userId;
-    const isVendor = session.vendorId.toString() === req.user.userId;
+    const roomId = `paygo-session-${sessionId}`;
 
-    if (!isUser && !isVendor) {
-      return res.status(StatusCodes.FORBIDDEN).json({ message: 'Access denied. You are not part of this session.' });
-    }
-    */
+    // Generate JWT token for VideoSDK
+    const payload = {
+      apikey: VIDEOSDK_API_KEY,
+      permissions: ['allow_join', 'allow_mod'],
+      version: 2,
+      roomId: roomId,
+      participantId: `user-${Date.now()}`,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
+    };
 
-    // Generate Agora token
-    const channelName = AgoraTokenService.generateChannelName(sessionId);
-    const uid = AgoraTokenService.generateUid();
-    const token = AgoraTokenService.generateRtcToken(channelName, uid);
+    // Simple JWT generation (in production, use a proper JWT library)
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+
+    const encodeBase64 = (obj) => {
+      return Buffer.from(JSON.stringify(obj)).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    };
+
+    const crypto = require('crypto');
+    const encodedHeader = encodeBase64(header);
+    const encodedPayload = encodeBase64(payload);
+    const data = `${encodedHeader}.${encodedPayload}`;
+
+    const signature = crypto.createHmac('sha256', VIDEOSDK_SECRET_KEY).update(data).digest('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+    const token = `${data}.${signature}`;
 
     return res.status(StatusCodes.OK).json({
-      message: 'Agora token generated successfully',
-      agoraConfig: {
-        appId: '16508d8f8518406287ee4e7f839fb0c3',
-        channel: channelName,
+      message: 'VideoSDK token generated successfully',
+      videosdkConfig: {
+        roomId: roomId,
         token: token,
-        uid: uid
+        mode: 'SEND_AND_RECV' // or 'RECV_ONLY' for audience
       }
     });
 
   } catch (error) {
-    logger.error('Generate Agora token error:', { error: error.message, sessionId });
+    logger.error('Generate VideoSDK token error:', { error: error.message, sessionId });
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: 'Failed to generate Agora token'
+      message: 'Failed to generate VideoSDK token'
     });
   }
 };
 
-//  Start a new streaming session (Only for normal users)
+//  Start a new streaming session
 exports.startSession = async (req, res) => {
   try {
     // ✅ 1. Check if user is a normal user (not vendor)
@@ -87,7 +107,16 @@ exports.startSession = async (req, res) => {
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ message: 'Service not found' });
 
-    // ✅ 3. Get vendorId from the service
+    // ✅ 3. Check if user can access this service
+    // Users can start sessions with any service, or with their own services
+    const isOwnService = service.userId.toString() === req.user.userId;
+    const canAccessService = req.user.role === 'user' || isOwnService;
+
+    if (!canAccessService) {
+      return res.status(403).json({ message: 'Access denied. You can only start sessions with available services.' });
+    }
+
+    // ✅ 4. Get vendorId from the service
     const vendorId = service.userId;
 
     // ✅ 4. Create a streaming session with ALL required fields
@@ -228,5 +257,28 @@ exports.getUserSessions = async (req, res) => {
   } catch (error) {
     logger.error('Get user sessions error:', { error: error.message, userId: req.user.userId });
     return res.status(500).json({ message: 'Failed to retrieve sessions' });
+  }
+};
+
+// 🌐 Get all active/live sessions (Public - for marketplace)
+exports.getActiveSessions = async (req, res) => {
+  try {
+    const activeSessions = await StreamingSession.find({
+      status: 'active',
+      endTime: null // Not ended yet
+    })
+      .populate('serviceId', 'name description rate type')
+      .populate('vendorId', 'name')
+      .sort({ startTime: -1 })
+      .limit(20); // Limit to recent active sessions
+
+    return res.status(200).json({
+      message: 'Active sessions retrieved successfully',
+      sessions: activeSessions,
+      count: activeSessions.length
+    });
+  } catch (error) {
+    logger.error('Get active sessions error:', { error: error.message });
+    return res.status(500).json({ message: 'Failed to retrieve active sessions' });
   }
 };

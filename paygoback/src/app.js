@@ -162,7 +162,7 @@ try {
 //app.use('/api/billing', billingRoutes);
 
 app.use(express.urlencoded({ extended: true }));
-app.use(notFoundMiddleware);
+// notFoundMiddleware moved to after routes are set up
 app.use(errorHandlerMiddleware);
 
 const port = process.env.PORT || 5000;
@@ -183,10 +183,12 @@ const start = async () => {
     const models = initModels(sequelize);
     console.log('✅ MODELS: All models initialized successfully')
 
-    console.log('🔄 DATABASE: Starting sync with force recreation')
+    console.log('🔄 DATABASE: Starting sync')
     try {
-      await sequelize.sync({ force: true }); // Force recreate all tables
-      console.log('✅ DATABASE: PostgreSQL connected and tables created successfully')
+      // Only force recreate in development if explicitly needed
+      const forceSync = process.env.NODE_ENV === 'development' && process.env.FORCE_DB_RESET === 'true';
+      await sequelize.sync({ force: forceSync });
+      console.log(`✅ DATABASE: PostgreSQL connected${forceSync ? ' and tables recreated' : ' (existing tables preserved)'}`)
     } catch (syncError) {
       console.log('❌ DATABASE SYNC ERROR:', {
         message: syncError.message,
@@ -226,7 +228,7 @@ const start = async () => {
       }
     }
 
-    // Set up additional routes (auth is already set up synchronously)
+    // Models are now initialized, set up additional routes
     try {
       const notificationRoutes = require('./routes/notifications');
       const profileRoutes = require('./routes/profile');
@@ -256,6 +258,9 @@ const start = async () => {
     } catch (routeError) {
       console.log('❌ Error setting up routes:', routeError.message);
     }
+
+    // Set up notFoundMiddleware after all routes
+    app.use(notFoundMiddleware);
 
     // Initialize blockchain service
     try {

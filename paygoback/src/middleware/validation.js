@@ -23,14 +23,23 @@ const validateRequired = (fields) => {
   };
 };
 
-// Validate vendor role
+// Validate vendor role or allow users to create streaming services
 const validateVendor = async (req, res, next) => {
   const User = require('../models/Users');
   try {
     const user = await User.findByPk(req.user.userId);
-    if (!user || user.role !== 'vendor') {
-      return res.status(403).json({ message: 'Access denied. Vendor account required' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    // Allow users to create streaming services (video type)
+    const isStreamingService = req.body.type === 'video';
+    const isVendor = user.role === 'vendor';
+
+    if (!isVendor && !isStreamingService) {
+      return res.status(403).json({ message: 'Access denied. Vendor account required for non-streaming services' });
+    }
+
     req.user.vendor = user; // Attach for later use
     next();
   } catch (error) {

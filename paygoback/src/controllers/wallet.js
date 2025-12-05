@@ -419,3 +419,74 @@ exports.autoSwap = async (req, res) => {
   // Placeholder logic - in real implementation, integrate with swap service
   res.status(200).json({ msg: `Swapped ${amount} ${fromToken} to ${toToken}` });
 };
+
+// 🛡️ Zcash Wallet Endpoints
+
+// Get Zcash wallet balance
+exports.getZcashBalance = async (req, res) => {
+  try {
+    const User = require('../models/Users');
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user || !user.zcashAddress) {
+      return res.status(404).json({ msg: 'Zcash wallet not found' });
+    }
+
+    const balance = await zcashService.getBalance(user.zcashAddress);
+
+    res.status(200).json({
+      address: user.zcashAddress,
+      balance: balance.balance,
+      confirmed: balance.confirmed,
+      unconfirmed: balance.unconfirmed
+    });
+  } catch (error) {
+    console.error('Zcash balance error:', error);
+    res.status(500).json({ msg: 'Failed to get Zcash balance', error: error.message });
+  }
+};
+
+// Get Zcash wallet transactions
+exports.getZcashTransactions = async (req, res) => {
+  try {
+    const User = require('../models/Users');
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user || !user.zcashAddress) {
+      return res.status(404).json({ msg: 'Zcash wallet not found' });
+    }
+
+    const transactions = await zcashService.getTransactions(user.zcashAddress);
+
+    res.status(200).json({
+      address: user.zcashAddress,
+      transactions
+    });
+  } catch (error) {
+    console.error('Zcash transactions error:', error);
+    res.status(500).json({ msg: 'Failed to get Zcash transactions', error: error.message });
+  }
+};
+
+// Get Zcash wallet info
+exports.getZcashWallet = async (req, res) => {
+  try {
+    const User = require('../models/Users');
+    const user = await User.findByPk(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    res.status(200).json({
+      address: user.zcashAddress,
+      accountIndex: user.zcashAccountIndex,
+      isSynced: user.isSynced,
+      lastSyncHeight: user.lastSyncHeight,
+      hasWallet: !!user.zcashAddress
+    });
+  } catch (error) {
+    console.error('Zcash wallet info error:', error);
+    res.status(500).json({ msg: 'Failed to get Zcash wallet info', error: error.message });
+  }
+};
