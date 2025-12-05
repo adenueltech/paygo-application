@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Star, ArrowRight, Video, Calendar, Clock, Plus, Settings, DollarSign, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -117,7 +117,28 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [activeSessions, setActiveSessions] = useState([])
+  const [loadingSessions, setLoadingSessions] = useState(true)
   const router = useRouter()
+
+  // Fetch active sessions
+  useEffect(() => {
+    const fetchActiveSessions = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/streams/active`)
+        if (response.ok) {
+          const data = await response.json()
+          setActiveSessions(data.sessions || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch active sessions:', error)
+      } finally {
+        setLoadingSessions(false)
+      }
+    }
+
+    fetchActiveSessions()
+  }, [])
 
   const filteredServices = services.filter((service) => {
     const matchesCategory = selectedCategory === "All" || service.category === selectedCategory
@@ -239,40 +260,60 @@ export default function MarketplacePage() {
             </Button>
           </div>
 
-          {/* Active Session Card */}
-          <div className="bg-gradient-to-r from-red-900/50 to-red-600/20 border border-red-500/30 rounded-2xl p-8 relative overflow-hidden">
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-              </span>
-              <span className="text-red-400 font-medium text-sm">Live Now</span>
+          {/* Active Sessions */}
+          {loadingSessions ? (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+              <p className="text-gray-400">Loading active sessions...</p>
             </div>
+          ) : activeSessions.length > 0 ? (
+            <div className="space-y-4">
+              {activeSessions.slice(0, 3).map((session: any) => (
+                <div key={session._id} className="bg-gradient-to-r from-red-900/50 to-red-600/20 border border-red-500/30 rounded-2xl p-8 relative overflow-hidden">
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span className="text-red-400 font-medium text-sm">Live Now</span>
+                  </div>
 
-            <div className="relative z-10">
-              <h3 className="text-xl font-bold text-white mb-2">Medical Consultation</h3>
-              <p className="text-gray-300 mb-6">Dr. Emily Watson • General Practitioner</p>
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-bold text-white mb-2">{session.serviceId?.name || 'Live Session'}</h3>
+                    <p className="text-gray-300 mb-6">{session.vendorId?.name || 'Service Provider'}</p>
 
-              <div className="flex flex-wrap gap-6 mb-8">
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Clock className="h-5 w-5 text-red-400" />
-                  <span>Started 5 mins ago</span>
+                    <div className="flex flex-wrap gap-6 mb-8">
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Clock className="h-5 w-5 text-red-400" />
+                        <span>Started {Math.floor((Date.now() - new Date(session.startTime).getTime()) / 60000)} mins ago</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Video className="h-5 w-5 text-red-400" />
+                        <span>Video Call</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <DollarSign className="h-5 w-5 text-green-400" />
+                        <span>₦{session.serviceId?.rate || 0}/min</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => router.push(`/dashboard/sessions/live/${session.sessionId}`)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-red-900/20"
+                    >
+                      Join Session
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-300">
-                  <Video className="h-5 w-5 text-red-400" />
-                  <span>Video Call</span>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => router.push("/dashboard/sessions/live/1")}
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-red-900/20"
-              >
-                Join Session
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+              <Video className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No Active Sessions</h3>
+              <p className="text-gray-400">Create a session to start live streaming</p>
+            </div>
+          )}
 
           {/* Upcoming Sessions */}
           <div>

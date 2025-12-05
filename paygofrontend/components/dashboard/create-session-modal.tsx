@@ -27,10 +27,103 @@ export function CreateSessionModal({ isOpen, onClose }: CreateSessionModalProps)
 
   const handleCreate = async () => {
     setIsProcessing(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setIsProcessing(false)
-    setStep(2)
+    try {
+      const token = localStorage.getItem('authToken')
+      console.log('Token from localStorage:', token ? 'exists' : 'null')
+      if (!token) {
+        alert('Please login first - no auth token found')
+        setIsProcessing(false)
+        return
+      }
+
+      // Verify token is still valid by checking user profile
+      console.log('Checking token validity with profile endpoint...')
+      try {
+        const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        console.log('Profile response status:', profileResponse.status)
+        if (!profileResponse.ok) {
+          console.log('Profile check failed, clearing token')
+          alert('Your session has expired. Please login again.')
+          localStorage.removeItem('authToken')
+          setIsProcessing(false)
+          return
+        }
+        console.log('Profile check passed')
+      } catch (profileError) {
+        console.log('Profile check error:', profileError)
+        alert('Your session has expired. Please login again.')
+        localStorage.removeItem('authToken')
+        setIsProcessing(false)
+        return
+      }
+
+      // Map frontend fields to backend API
+      const serviceData = {
+        name: title,
+        description: description,
+        category: 'Specialized Services',
+        subcategory: sessionType === 'streaming' ? 'Live Streaming' : 'Professional Services',
+        type: sessionType === 'streaming' ? 'video' : 'other',
+        rate: parseFloat(rate),
+        unit: pricingType === 'fixed' ? 'per_session' : pricingType === 'hour' ? 'per_hour' : 'per_minute',
+        metadata: {
+          maxParticipants: maxParticipants,
+          duration: duration ? parseInt(duration) : null,
+          pricingType: pricingType
+        },
+        isActive: true,
+        tags: [sessionType]
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/service`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(serviceData)
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || `Failed to create service: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('Service created:', result)
+
+      // Start a session with the newly created service
+      const sessionResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/streams/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          serviceId: result.service._id,
+          device: navigator.userAgent
+        })
+      })
+
+      if (!sessionResponse.ok) {
+        console.warn('Failed to start session, but service was created')
+      } else {
+        const sessionResult = await sessionResponse.json()
+        console.log('Session started:', sessionResult)
+      }
+
+      setIsProcessing(false)
+      setStep(2)
+    } catch (error) {
+      console.error('Create service error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to create session: ${errorMessage}`)
+      setIsProcessing(false)
+    }
   }
 
   const resetModal = () => {
